@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.workforce.backend.dto.UserResponseDTO;
+import com.workforce.backend.dto.response.UserResponseDTO;
 import com.workforce.backend.entity.User;
 import com.workforce.backend.exception.ResourceNotFoundException;
 import com.workforce.backend.repository.UserRepository;
@@ -42,16 +41,19 @@ public List<UserResponseDTO> getAllUsers() { // <-- Pastikan ini UserResponseDTO
         // Bungkus data aslinya pakai topeng DTO sebelum dikirim
         return new UserResponseDTO(user);
     }
-
-    // 3. Tambah user baru (POST /api/users)
+// 3. Tambah user baru (POST /api/users)
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
+    public UserResponseDTO createUser(@RequestBody User user) {
+        // PERHATIAN: Di sistem nyata, pembuatan user sebaiknya lewat AuthController (Register)
+        // agar password-nya dienkripsi (Bcrypt) terlebih dahulu sebelum di-save.
+        // Namun jika endpoint ini khusus Admin, pastikan kembaliannya adalah DTO:
+        User savedUser = userRepository.save(user);
+        return new UserResponseDTO(savedUser);
     }
 
     // 4. Update/Ubah data user (PUT /api/users/{id})
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User detailBaru) {
+    public UserResponseDTO updateUser(@PathVariable Long id, @RequestBody User detailBaru) {
         User userLama = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User dengan ID " + id + " tidak ditemukan"));
 
@@ -63,13 +65,8 @@ public List<UserResponseDTO> getAllUsers() { // <-- Pastikan ini UserResponseDTO
         userLama.setStatus(detailBaru.getStatus());
         userLama.setSpecialty(detailBaru.getSpecialty());
 
-        return userRepository.save(userLama);
-    }
-
-    // 5. Hapus user (DELETE /api/users/{id})
-    @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
-        return "User dengan ID " + id + " berhasil dihapus!";
+        // Simpan lalu bungkus dengan DTO
+        User updatedUser = userRepository.save(userLama);
+        return new UserResponseDTO(updatedUser);
     }
 }

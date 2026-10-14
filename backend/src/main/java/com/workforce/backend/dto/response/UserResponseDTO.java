@@ -1,4 +1,4 @@
-package com.workforce.backend.dto;
+package com.workforce.backend.dto.response;
 
 import com.workforce.backend.entity.User;
 
